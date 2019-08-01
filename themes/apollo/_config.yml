@@ -1,0 +1,21 @@
+menu:
+    Blog: /
+    Archive: /archives/
+    GitHub: https://github.com/fancxxy
+    Rss: /atom.xml
+    Weibo: https://www.weibo.com/justwanthavefun
+    Blank: /
+
+logo: https://s.gravatar.com/avatar/e0b4a3daa0554c4b97215f1d1e66395e?s=80
+
+# Comment
+# e.g disqus: seansun
+disqus:
+duoshuo:
+
+# Analytics
+# google-analytics:
+# ga: UA-xxxxxxxx-x
+
+# Copyright Infomation
+startyear: 2018

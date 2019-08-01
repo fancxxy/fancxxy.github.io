@@ -86,4 +86,8 @@ archive_generator:
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
 deploy:
-  type:
+  type: git
+  repo: https://github.com/fancxxy/fancxxy.github.io.git
+  name: fancxxy
+  email: fancxxy@gmail.com
+  branch: master

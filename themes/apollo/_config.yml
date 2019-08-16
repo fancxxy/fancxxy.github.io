@@ -1,10 +1,10 @@
 menu:
     Blog: /
     Archive: /archives/
-    GitHub: https://github.com/fancxxy
     Rss: /atom.xml
+    GitHub: https://github.com/fancxxy
     Weibo: https://www.weibo.com/justwanthavefun
-    Blank: /
+    Blank: about:blank
 
 logo: https://s.gravatar.com/avatar/e0b4a3daa0554c4b97215f1d1e66395e?s=80
 

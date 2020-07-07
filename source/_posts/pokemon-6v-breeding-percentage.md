@@ -16,23 +16,38 @@ tags:
 ### 分析
 如果所有个体值都遗传自父母，那么每项值的可能性是2（父或母），总共6项的组合就是2<sup>6</sup>=64种情况，可以想象成是两棵完全二叉树，二叉树的每一层可以理解成一项个体值，完全二叉树第六层结点个数是2<sup>6-1</sup>=32，因为有两棵结果就刚好是32*2=64。
 
-```
-                                        HP（父）
-                                       /   \
-                                      /     \
-                                  攻击（父）  攻击(母）
-                                  /    \
-                                 /      \
-                             防御（父）  防御（母）
-                              /   \      
-                             /     \ 
-                         特攻（父）  特攻（母）
-                          /    \
-                         /      \
-                    特防（父）   特防（母）
-                      /   \
-                     /     \
-                速度（父）  速度（母）
+```graphviz
+graph G {
+    // nodesep 结点列间距
+    // ranksep 结点行间距
+    graph[nodesep=0.8,ranksep=0.2]
+    node [shape=circle,fixedsize=true]
+
+    fhp [label="HP",color=blue]
+    fattack [label="攻击",color=blue]
+    fdefense [label="防御",color=blue]
+    fsattack [label="特攻",color=blue]
+    fsdefense [label="特防",color=blue]
+    fspeed [label="速度",color=blue]
+
+    mhp [label="HP",color=red]
+    mattack [label="攻击",color=red]
+    mdefense [label="防御",color=red]
+    msattack [label="特攻",color=red]
+    msdefense [label="特防",color=red]
+    mspeed [label="速度",color=red]
+
+    fhp -- fattack
+    fhp -- mattack
+    fattack -- fdefense
+    fattack -- mdefense
+    fdefense -- fsattack
+    fdefense -- msattack
+    fsattack -- fsdefense
+    fsattack -- msdefense
+    fsdefense -- fspeed
+    fsdefense -- mspeed
+} 
 ```
 
 ### 代码
@@ -102,6 +117,16 @@ func main() {
 结果和上面给出来的一致，6v的概率就是1.0417%，真的只是脸黑而已_(:зゝ∠)_。
 {% asset_img percentage-calculator.png %}
 
-十分钟后...
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
 
+十分钟后
 {% asset_img dreepy.jpg %}

@@ -7,7 +7,6 @@
   },
   "dependencies": {
     "hexo": "^3.9.0",
-    "hexo-browsersync": "^0.3.0",
     "hexo-deployer-git": "^1.0.0",
     "hexo-filter-viz": "git+https://github.com/yao-zou/hexo-filter-viz.git",
     "hexo-generator-archive": "^0.1.5",
@@ -20,6 +19,7 @@
     "hexo-renderer-jade": "^0.4.1",
     "hexo-renderer-marked": "^1.0.1",
     "hexo-renderer-stylus": "^0.3.3",
-    "hexo-server": "^0.3.3"
+    "hexo-server": "^0.3.3",
+    "sass": "^1.26.10"
   }
 }

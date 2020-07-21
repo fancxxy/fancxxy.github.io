@@ -14,6 +14,13 @@ mixin posts()
                     h2.post-title
                         a.post-title-link(href= url_for(item.path))
                             != item.title
+
+                    .tags
+                        if item.tags
+                            for tag in item.tags.toArray()
+                                a.tag-title(href=url_for(tag.path))
+                                    != '#' + tag.name
+
                     +postInfo(item)
                     .post-content
                         != item.excerpt
@@ -43,6 +50,13 @@ mixin post(item)
         article.post-block
             h1.post-title
                 != item.title
+
+            .tags
+                if item.tags
+                    for tag in item.tags.toArray()
+                        a.tag-title(href=url_for(tag.path))
+                            != '#' + tag.name
+
             +postInfo(item)
             .post-content
                 != item.content

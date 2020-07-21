@@ -1,0 +1,347 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta name="generator" content="Hexo 3.9.0"><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 缓存淘汰算法LRU和LFU · fancxxy' blog</title><meta name="description" content="缓存淘汰算法LRU和LFU - fancxxy"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="https://fancxxy.github.io/atom.xml" title="fancxxy' blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="https://avatars2.githubusercontent.com/u/7724598?s=466&amp;v=3" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="https://github.com/fancxxy" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="https://www.weibo.com/fancxxy" target="_blank" class="nav-list-link">WEIBO</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">缓存淘汰算法LRU和LFU</h1><div class="tags"><a href="/tags/数据结构和算法/" class="tag-title">#数据结构和算法</a></div><div class="post-info">Jul 20, 2020</div><div class="post-content"><p>缓存可以用来提高数据的查询速度，但缓存容量有限，当缓存达到容量上限时，需要删除部分数据来添加新的数据，根据删除数据的策略不同可以分为FIFO、LRU和LFU三种。FIFO先进先出，可以通过有序Map来实现。</p>
+<a id="more"></a>
+
+<h3 id="LRU"><a href="#LRU" class="headerlink" title="LRU"></a>LRU</h3><p>LRU（Least Recently Used）最近最少使用算法，LRU的逻辑是<strong>如果数据最近被访问过，那么未来也极有可能被访问</strong>，当缓存达到容量上限删除最久没有被访问过的数据。</p>
+<p>使用双向链表来存储数据，新加入的数据放到链表头，当数据被访问时把存储数据的结点移动到链表头，这样链表中结点的顺序就代表数据被访问的顺序。当链表结点数量达到设定的阈值时，丢弃链表尾结点，因为它是最久没有被访问的。</p>
+<p>链表查询的时间复杂度是O(n)，可以用哈希表存储链表结点的地址，查询达到O(1)的复杂度。</p>
+<div id="graphviz-0"></div>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cache</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"container/list"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> lruItem <span class="keyword">struct</span> &#123;</span><br><span class="line">	key   <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	value <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// LRU 缓存</span></span><br><span class="line"><span class="keyword">type</span> LRU <span class="keyword">struct</span> &#123;</span><br><span class="line">	capacity <span class="keyword">int</span></span><br><span class="line">	hash     <span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*list.Element</span><br><span class="line">	list     *list.List</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewLRU 创建LRU缓存</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewLRU</span><span class="params">(capacity <span class="keyword">int</span>)</span> *<span class="title">LRU</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;LRU&#123;</span><br><span class="line">		capacity: capacity,</span><br><span class="line">		hash:     <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*list.Element),</span><br><span class="line">		list:     list.New(),</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get 读取数据并移动结点到链表头</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(lru *LRU)</span> <span class="title">Get</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">if</span> lru.capacity &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	node, ok := lru.hash[key]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	lru.list.MoveToFront(node)</span><br><span class="line">	<span class="keyword">return</span> node.Value.(*lruItem).value</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Put 写入数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(lru *LRU)</span> <span class="title">Put</span><span class="params">(key, value <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> lru.capacity &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	node, ok := lru.hash[key]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="keyword">if</span> lru.list.Len() &gt;= lru.capacity &#123;</span><br><span class="line">			node = lru.list.Back()</span><br><span class="line">			<span class="built_in">delete</span>(lru.hash, node.Value.(*lruItem).key)</span><br><span class="line">			lru.list.Remove(node)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		lru.hash[key] = lru.list.PushFront(&amp;lruItem&#123;key: key, value: value&#125;)</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	node.Value = &amp;lruItem&#123;key: key, value: value&#125;</span><br><span class="line">	lru.list.MoveToFront(node)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="LFU"><a href="#LFU" class="headerlink" title="LFU"></a>LFU</h3><p>LFU（Least Frequently Used）最不经常使用，LFU的逻辑是<strong>如果数据最近一段时间访问次数很少，那么在未来被访问的可能性也很小</strong>，当缓存达到容量上限删除访问次数最少的元素，如果有多个元素访问次数最少，按照访问时间顺序删除最久未被访问的元素。</p>
+<p>使用两张哈希表，其中一张存储缓存的key、value以及访问频率freq，另一张哈希表映射访问频率freq和所有相同访问频率的缓存数据组成的双向链表。</p>
+<p>第一张哈希表通过key可以定位到某个双向链表中的某个结点，再通过结点内部的freq由第二张哈希表定位到保存这个结点的双向链表。Get的操作就是在这个链表中删除该结点，再定位到freq+1的链表上，把缓存数据插入链表头，同时更新最小访问频率。最小访问频率的作用是当缓存容量达到上限时，快速定位并删除最不经常使用的元素。Put的操作如果key已经存在时跟Get类似，区别是要给缓存重新赋值，如果key不存在则在freq=1的链表头插入一条新缓存数据，修改最小访问频率为1。</p>
+<div id="graphviz-1"></div>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> cache</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"container/list"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> lfuItem <span class="keyword">struct</span> &#123;</span><br><span class="line">	key   <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	value <span class="keyword">interface</span>&#123;&#125;</span><br><span class="line">	freq  <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// LFU 缓存</span></span><br><span class="line"><span class="keyword">type</span> LFU <span class="keyword">struct</span> &#123;</span><br><span class="line">	capacity <span class="keyword">int</span></span><br><span class="line">	keyMap   <span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*list.Element</span><br><span class="line">	freqMap  <span class="keyword">map</span>[<span class="keyword">int</span>]*list.List</span><br><span class="line">	minFreq  <span class="keyword">int</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// NewLFU 创建LFU缓存</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">NewLFU</span><span class="params">(capacity <span class="keyword">int</span>)</span> *<span class="title">LFU</span></span> &#123;</span><br><span class="line">	<span class="keyword">return</span> &amp;LFU&#123;</span><br><span class="line">		capacity: capacity,</span><br><span class="line">		keyMap:   <span class="keyword">map</span>[<span class="keyword">interface</span>&#123;&#125;]*list.Element&#123;&#125;,</span><br><span class="line">		freqMap:  <span class="keyword">map</span>[<span class="keyword">int</span>]*list.List&#123;&#125;,</span><br><span class="line">		minFreq:  <span class="number">0</span>,</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Get 读取数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(lfu *LFU)</span> <span class="title">Get</span><span class="params">(key <span class="keyword">interface</span>&#123;&#125;)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">if</span> lfu.capacity &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	node, ok := lfu.keyMap[key]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	item, ok := node.Value.(*lfuItem)</span><br><span class="line"></span><br><span class="line">	lst := lfu.freqMap[item.freq]</span><br><span class="line"></span><br><span class="line">	lst.Remove(node)</span><br><span class="line">	<span class="keyword">if</span> lst.Len() == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="built_in">delete</span>(lfu.freqMap, item.freq)</span><br><span class="line">		<span class="keyword">if</span> lfu.minFreq == item.freq &#123;</span><br><span class="line">			lfu.minFreq++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	item.freq++</span><br><span class="line">	lst, ok = lfu.freqMap[item.freq]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		lst = list.New()</span><br><span class="line">	&#125;</span><br><span class="line">	lfu.keyMap[key] = lst.PushFront(item)</span><br><span class="line">	lfu.freqMap[item.freq] = lst</span><br><span class="line">	<span class="keyword">return</span> item.value</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Put 写入数据</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(lfu *LFU)</span> <span class="title">Put</span><span class="params">(key, value <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> lfu.capacity &lt;= <span class="number">0</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	node, ok := lfu.keyMap[key]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		<span class="keyword">if</span> <span class="built_in">len</span>(lfu.keyMap) &gt;= lfu.capacity &#123;</span><br><span class="line">			lst := lfu.freqMap[lfu.minFreq]</span><br><span class="line">			key := lst.Back().Value.(*lfuItem).key</span><br><span class="line">			lst.Remove(lst.Back())</span><br><span class="line">			<span class="keyword">if</span> lst.Len() == <span class="number">0</span> &#123;</span><br><span class="line">				<span class="built_in">delete</span>(lfu.freqMap, lfu.minFreq)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="built_in">delete</span>(lfu.keyMap, key)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		item := &amp;lfuItem&#123;key: key, value: value, freq: <span class="number">1</span>&#125;</span><br><span class="line">		lst, ok := lfu.freqMap[<span class="number">1</span>]</span><br><span class="line">		<span class="keyword">if</span> !ok &#123;</span><br><span class="line">			lst = list.New()</span><br><span class="line">		&#125;</span><br><span class="line">		lfu.keyMap[key] = lst.PushFront(item)</span><br><span class="line">		lfu.freqMap[<span class="number">1</span>] = lst</span><br><span class="line">		lfu.minFreq = <span class="number">1</span></span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	item := node.Value.(*lfuItem)</span><br><span class="line">	lst := lfu.freqMap[item.freq]</span><br><span class="line"></span><br><span class="line">	lst.Remove(node)</span><br><span class="line">	<span class="keyword">if</span> lst.Len() == <span class="number">0</span> &#123;</span><br><span class="line">		<span class="built_in">delete</span>(lfu.freqMap, item.freq)</span><br><span class="line">		<span class="keyword">if</span> lfu.minFreq == item.freq &#123;</span><br><span class="line">			lfu.minFreq++</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	item.freq++</span><br><span class="line">	item.value = value</span><br><span class="line">	lst, ok = lfu.freqMap[item.freq]</span><br><span class="line">	<span class="keyword">if</span> !ok &#123;</span><br><span class="line">		lst = list.New()</span><br><span class="line">	&#125;</span><br><span class="line">	lfu.keyMap[key] = lst.PushFront(item)</span><br><span class="line">	lfu.freqMap[item.freq] = lst</span><br><span class="line">	<span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<script src="https://unpkg.com/viz.js@2.1.2/viz.js"></script><script src="https://unpkg.com/viz.js@2.1.2/full.render.js"></script><textarea id="graphviz-0-code" style="display: none">digraph {
+    graph [label="LRU缓存", splines=false, fontsize=10]
+	node  [fontsize=10]
+
+    hash [shape=none, xlabel="哈希表", label=<
+        <table border="0" cellborder="1" cellspacing="0">
+            <tr>
+                <td width="34" height="30" port="key0">key0</td>
+                <td width="34" height="30" port="key1">key1</td>
+                <td width="34" height="30" port="key2">key2</td>
+                <td width="34" height="30" port="key3">key3</td>
+                <td width="34" height="30" port="key4">key4</td>
+            </tr>
+        </table> >]
+
+    node0 [shape=none, xlabel="双向链表", label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="nw"></td></tr>
+                        <tr><td port="sw"></td></tr>
+                    </table>
+                </td>
+                <td width="32" height="40" port="dt">key1&lt;br/&gt;val1</td>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="ne"></td></tr>
+                        <tr><td port="se"></td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table> >]
+
+    node1 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="nw"></td></tr>
+                        <tr><td port="sw"></td></tr>
+                    </table>
+                </td>
+                <td width="32" height="40" port="dt">key3&lt;br/&gt;val3</td>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="ne"></td></tr>
+                        <tr><td port="se"></td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table> >]
+
+    node2 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="nw"></td></tr>
+                        <tr><td port="sw"></td></tr>
+                    </table>
+                </td>
+                <td width="32" height="40" port="dt">key4&lt;br/&gt;val4</td>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="ne"></td></tr>
+                        <tr><td port="se"></td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table> >]
+
+    node3 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="nw"></td></tr>
+                        <tr><td port="sw"></td></tr>
+                    </table>
+                </td>
+                <td width="32" height="40" port="dt">key0&lt;br/&gt;val0</td>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="ne"></td></tr>
+                        <tr><td port="se"></td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table> >]
+
+    node4 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="nw"></td></tr>
+                        <tr><td port="sw"></td></tr>
+                    </table>
+                </td>
+                <td width="32" height="40" port="dt">key2&lt;br/&gt;val2</td>
+                <td width="4" height="40">
+                    <table border="0" cellborder="0" cellspacing="0">
+                        <tr><td port="ne"></td></tr>
+                        <tr><td port="se"></td></tr>
+                    </table>
+                </td>
+            </tr>
+        </table> >]
+
+    {rank=same node0 node1 node2 node3 node4}
+
+    node0:ne -> node1:nw
+    node1:sw -> node0:se
+    node1:ne -> node2:nw
+    node2:sw -> node1:se
+    node2:ne -> node3:nw
+    node3:sw -> node2:se
+    node3:ne -> node4:nw
+    node4:sw -> node3:se
+
+    hash:key2:s -> node2:dt:n [style=invis]
+    hash:key0:s -> node3:dt:n [arrowhead=onormal,style=dashed,constraint=false]
+    hash:key1:s -> node0:dt:n [arrowhead=onormal,style=dashed,constraint=false]
+    hash:key2:s -> node4:dt:n [arrowhead=onormal,style=dashed,constraint=false]
+    hash:key3:s -> node1:dt:n [arrowhead=onormal,style=dashed,constraint=false]
+    hash:key4:s -> node2:dt:n [arrowhead=onormal,style=dashed,constraint=false]
+}</textarea><script>  var viz = new Viz();  var code = document.getElementById("graphviz-0-code").value;  viz.renderSVGElement(code)  .then(function(element) {    document.getElementById("graphviz-0").append(element)  });</script><textarea id="graphviz-1-code" style="display: none">digraph {
+	graph [label="LFU缓存", splines=false, fontsize=10, ranksep=0.4]
+    node  [fontsize=10]
+
+    hash0 [shape=none, xlabel="哈希表", label=<
+        <table border="0" cellborder="1" cellspacing="0">
+            <tr>
+                <td width="45" height="30" port="freq0">freq=1</td>
+                <td width="45" height="30" port="freq1">freq=3</td>
+                <td width="45" height="30" port="freq2">freq=4</td>
+                <td width="45" height="30" port="freq3">freq=7</td>
+                <td width="45" height="30" port="freq4">freq=9</td>
+            </tr>
+        </table> >]
+
+
+    node0 [shape=none, xlabel="双向链表", label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key4&lt;br/&gt;val4&lt;br/&gt;freq=4</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node1 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key0&lt;br/&gt;val0&lt;br/&gt;freq=3</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node2 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key2&lt;br/&gt;val2&lt;br/&gt;freq=7</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node3 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key1&lt;br/&gt;val1&lt;br/&gt;freq=1</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+    
+    node4 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key6&lt;br/&gt;val6&lt;br/&gt;freq=9</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node5 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key5&lt;br/&gt;val5&lt;br/&gt;freq=4</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node6 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key3&lt;br/&gt;val3&lt;br/&gt;freq=1</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    node7 [shape=none, label=<
+        <table border="1" cellborder="0" cellspacing="0">
+            <tr>
+                <td width="12" height="4" port="nw"></td>
+                <td width="16" height="4" port="nm"></td>
+                <td width="12" height="4" port="ne"></td>
+            </tr>
+            <tr><td colspan="3" width="20" height="32" port="dt">key7&lt;br/&gt;val7&lt;br/&gt;freq=1</td></tr>
+            <tr>
+                <td width="12" height="4" port="sw"></td>
+                <td width="16" height="4" port="sm"></td>
+                <td width="12" height="4" port="se"></td>
+            </tr>
+        </table> >]
+
+    min [shape=ellipse, label="minFreq=1"]
+
+    hash1 [shape=none, xlabel="哈希表", label=<
+        <table border="0" cellborder="1" cellspacing="0">
+            <tr>
+                <td width="45" height="30" port="key0">key0</td>
+                <td width="45" height="30" port="key1">key1</td>
+                <td width="45" height="30" port="key2">key2</td>
+                <td width="45" height="30" port="key3">key3</td>
+                <td width="45" height="30" port="key4">key4</td>
+                <td width="45" height="30" port="key5">key5</td>
+                <td width="45" height="30" port="key6">key6</td>
+                <td width="45" height="30" port="key7">key7</td>
+            </tr>
+        </table> >]
+
+    
+    {rank=same min hash0}
+    {rank=same node0 node1 node2 node3 node4}
+    {rank=same node5 node6}
+    
+    edge [arrowhead=normal, dir=forward, style=solid]
+    node0:sw:s -> node5:nw:n
+    node5:ne:n -> node0:se:s
+    node3:sw:s -> node6:nw:n
+    node6:ne:n -> node3:se:s
+    node6:sw:s -> node7:nw:n
+    node7:ne:n -> node6:se:s
+
+    edge [style=invis]
+    node0:dt:e -> node1:dt:w 
+    node1:dt:e -> node2:dt:w
+    node2:dt:e -> node3:dt:w
+    node3:dt:e -> node4:dt:w
+    hash0:freq3:s -> node2:nm:n
+    hash0:freq4:e -> min:w
+    node7:sm -> hash1:key3:n
+    node7:sm -> hash1:key7:n
+
+
+    edge [arrowhead=onormal, style=dashed, constraint=false]
+    hash0:freq0:s -> node3:nm
+    hash0:freq1:s -> node1:nm
+    hash0:freq2:s -> node0:nm
+    hash0:freq3:s -> node2:nm
+    hash0:freq4:s -> node4:nm
+
+    hash1:key0:n -> node1:sm 
+    hash1:key1:n -> node3:sm
+    hash1:key2:n -> node2:sm
+    hash1:key3:n -> node6:sm
+    hash1:key4:n -> node0:sm
+    hash1:key5:n -> node5:sm
+    hash1:key6:n -> node4:sm
+    hash1:key7:n -> node7:sm
+
+    edge [arrowhead=onormal, style=dashed, constraint=false, color=red]
+	min -> node3:nm
+}</textarea><script>  var viz = new Viz();  var code = document.getElementById("graphviz-1-code").value;  viz.renderSVGElement(code)  .then(function(element) {    document.getElementById("graphviz-1").append(element)  });</script></div></article></div></main><footer><div class="paginator"><a href="/2019/11/23/pokemon-6v-breeding-percentage/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'fancxxy';
+var disqus_identifier = '2020/07/20/cache-replacement-policies/';
+var disqus_title = '缓存淘汰算法LRU和LFU';
+var disqus_url = 'https://fancxxy.github.io/2020/07/20/cache-replacement-policies/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//fancxxy.disqus.com/count.js" async></script><div class="copyright"><p>© 2018 - 2020 <a href="https://fancxxy.github.io">fancxxy</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script></body></html>

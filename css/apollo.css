@@ -475,6 +475,8 @@ header {
   margin: 0.65em 0;
   color: #2c3e50;
   font-size: 1.5em; }
+.post-block .tag-title {
+  color: #42b983; }
 .post-block .post-info {
   color: #7f8c8d;
   margin: 1.2em 0; }
@@ -583,7 +585,7 @@ pre {
       width: auto;
       height: 18px; }
 
-.highlight.html .code:after, .highlight.js .code:after, .highlight.bash .code:after, .highlight.css .code:after, .highlight.scss .code:after, .highlight.diff .code:after, .highlight.java .code:after, .highlight.xml .code:after, .highlight.python .code:after, .highlight.json .code:after, .highlight.swift .code:after, .highlight.ruby .code:after, .highlight.perl .code:after, .highlight.php .code:after, .highlight.c .code:after, .highlight.cpp .code:after, .highlight.ts .code:after {
+.highlight.html .code:after, .highlight.js .code:after, .highlight.bash .code:after, .highlight.css .code:after, .highlight.scss .code:after, .highlight.diff .code:after, .highlight.java .code:after, .highlight.xml .code:after, .highlight.python .code:after, .highlight.json .code:after, .highlight.swift .code:after, .highlight.ruby .code:after, .highlight.perl .code:after, .highlight.php .code:after, .highlight.c .code:after, .highlight.cpp .code:after, .highlight.ts .code:after, .highlight.go .code:after, .highlight.golang .code:after {
   position: absolute;
   top: 0;
   right: 0;
@@ -651,6 +653,12 @@ pre {
 
 .highlight.cpp .code:after {
   content: 'C++'; }
+
+.highlight.go .code:after {
+  content: "Go"; }
+
+.highlight.golang .code:after {
+  content: 'Go'; }
 
 pre {
   color: #525252; }

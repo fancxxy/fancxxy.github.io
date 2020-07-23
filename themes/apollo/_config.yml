@@ -1,6 +1,7 @@
 menu:
     Blog: /
     Archive: /archives/
+    Tags: /tags/
     Rss: /atom.xml
     GitHub: https://github.com/fancxxy
     Weibo: https://www.weibo.com/fancxxy

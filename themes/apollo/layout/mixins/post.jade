@@ -1,9 +1,16 @@
-mixin postInfo(item)
+mixin postInfo(item, tag)
     .post-info
         != full_date(item.date, 'll')
         if item.from && (is_home() || is_post())
             a.post-from(href=item.from target="_blank" title=item.from)!= __('translated')
+        if tag
+            +tagInfo(item)
 
+mixin tagInfo(item)
+        if item.tags
+            for tag in item.tags.toArray()
+                a.tag-title(href=url_for(tag.path))
+                    != '#' + tag.name
 
 //- Index Page
 mixin posts()
@@ -15,13 +22,7 @@ mixin posts()
                         a.post-title-link(href= url_for(item.path))
                             != item.title
 
-                    .tags
-                        if item.tags
-                            for tag in item.tags.toArray()
-                                a.tag-title(href=url_for(tag.path))
-                                    != '#' + tag.name
-
-                    +postInfo(item)
+                    +postInfo(item, true)
                     .post-content
                         != item.excerpt
                     a.read-more(href= url_for(item.path))!= __('more')
@@ -39,9 +40,17 @@ mixin postList()
             if change 
                 h2.archive-year!= year
             .post-item
-                +postInfo(item)
+                +postInfo(item, false)
                 a.post-title-link(href= url_for(item.path))
                     != item.title
+        - })
+
+//- Tags Page
+mixin tagList()
+    .tags
+        - site.tags.each(function (tag) {
+            a.tag-title(href=url_for(tag.path))
+                != '#' + tag.name
         - })
 
 //- Post Page
@@ -51,12 +60,6 @@ mixin post(item)
             h1.post-title
                 != item.title
 
-            .tags
-                if item.tags
-                    for tag in item.tags.toArray()
-                        a.tag-title(href=url_for(tag.path))
-                            != '#' + tag.name
-
-            +postInfo(item)
+            +postInfo(item, true)
             .post-content
                 != item.content

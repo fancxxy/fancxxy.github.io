@@ -2,9 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://fancxxy.github.io/2020/07/23/cpu-percentage/</loc>
+    
+    <lastmod>2020-07-24T01:52:22.417Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://fancxxy.github.io/2019/11/23/pokemon-6v-breeding-percentage/</loc>
     
-    <lastmod>2020-07-23T07:31:46.979Z</lastmod>
+    <lastmod>2020-07-23T08:50:38.575Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://fancxxy.github.io/2020/07/20/cache-replacement-policies/</loc>
+    
+    <lastmod>2020-07-23T08:37:25.799Z</lastmod>
     
   </url>
   
@@ -12,13 +26,6 @@
     <loc>https://fancxxy.github.io/tags/index.html</loc>
     
     <lastmod>2020-07-23T06:04:01.380Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://fancxxy.github.io/2020/07/20/cache-replacement-policies/</loc>
-    
-    <lastmod>2020-07-23T05:10:48.275Z</lastmod>
     
   </url>
   

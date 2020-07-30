@@ -1,16 +1,17 @@
-mixin postInfo(item, tag)
+mixin postInfo(item, flag)
     .post-info
         != full_date(item.date, 'll')
         if item.from && (is_home() || is_post())
             a.post-from(href=item.from target="_blank" title=item.from)!= __('translated')
-        if tag
+        if flag
             +tagInfo(item)
 
 mixin tagInfo(item)
         if item.tags
             for tag in item.tags.toArray()
-                a.tag-title(href=url_for(tag.path))
-                    != '#' + tag.name
+                if tag.name != "none"
+                    a.tag-title(href=url_for(tag.path))
+                        != '#' + tag.name
 
 //- Index Page
 mixin posts()

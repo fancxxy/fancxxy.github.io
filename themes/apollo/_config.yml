@@ -6,7 +6,8 @@ menu:
     GitHub: https://github.com/fancxxy
     Weibo: https://www.weibo.com/fancxxy
 
-logo: https://avatars2.githubusercontent.com/u/7724598?s=466&v=3
+# favicon: run.gif
+logo: logo.gif #https://avatars2.githubusercontent.com/u/7724598?s=466&v=3
 
 # Comment
 # e.g disqus: seansun

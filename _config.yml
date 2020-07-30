@@ -91,3 +91,6 @@ deploy:
   name: fancxxy
   email: fancxxy@gmail.com
   branch: master
+
+asciinema:
+  enable: true

@@ -1,7 +1,9 @@
 ---
 title: 计算Linux系统的CPU使用率
 date: 2019-09-23 16:36:46
-tags: Linux
+tags: 
+- Linux
+- Go
 ---
 
 Linux系统启动后会在内存中生成一个`/proc`虚拟文件系统，内部存储了内核运行状态，计算CPU使用率用到了其中的`/proc/stat`文件。
